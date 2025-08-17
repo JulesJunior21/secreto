@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Traducteur</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f1221;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      transition: background 0.3s, color 0.3s;
+    }
+    body.light {
+      background: #f9f9f9;
+      color: #000;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+    .toggle-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      background: #4cafef;
+      color: #000;
+      cursor: pointer;
+    }
+    .wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .row {
+      display: flex;
+      gap: 20px;
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+    .column {
+      flex: 1;
+      min-width: 300px;
+      display: flex;
+      flex-direction: column;
+    }
+    textarea {
+      flex: 1;
+      height: 200px;
+      padding: 15px;
+      background: #1a1d2e;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 10px;
+      resize: vertical;
+      font-size: 1rem;
+    }
+    body.light textarea {
+      background: #fff;
+      color: #000;
+      border: 1px solid #ccc;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      background: #4cafef;
+      color: #000;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .center {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    .status {
+      font-family: monospace;
+      font-size: 0.9em;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Langue Secrète</h1>
+      <button class="toggle-btn" id="themeToggle">Mode clair</button>
+    </div>
+    <div class="wrapper">
+      <div class="row">
+        <div class="column">
+          <label id="labelInput">Français</label>
+          <textarea id="inputText"></textarea>
+          <button onclick="copyToClipboard('inputText')">Copier</button>
+        </div>
+        <div class="column">
+          <label id="labelOutput">Langue codée</label>
+          <textarea id="outputText" readonly></textarea>
+          <button onclick="copyToClipboard('outputText')">Copier</button>
+        </div>
+      </div>
+      <div class="center">
+        <button id="swapBtn">⇄ Inverser</button>
+        <div class="status" id="status"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const dict = {
+      A: "nok", B: "zir", C: "tal", D: "mek", E: "lun", F: "vos", G: "rem", H: "dak",
+      I: "sel", J: "kur", K: "jen", L: "mir", M: "rol", N: "vek", O: "pan", P: "zol",
+      Q: "fek", R: "ned", S: "kim", T: "lar", U: "dom", V: "rik", W: "sul", X: "gar",
+      Y: "tun", Z: "wol"
+    };
+
+    const reverseDict = Object.fromEntries(Object.entries(dict).map(([k, v]) => [v, k]));
+    let reversed = false;
+
+    function toCode(str) {
+      return [...str.toUpperCase()].map(c => dict[c] || c).join(" ");
+    }
+
+    function fromCode(str) {
+      const tokens = str.trim().split(/(\s+|[^a-zA-Z]+)/g).filter(t => t.length > 0);
+      let output = "";
+
+      for (const token of tokens) {
+        if (/^[a-z]{3}$/i.test(token)) {
+          const upper = token.toLowerCase();
+          output += reverseDict[upper] ? reverseDict[upper].toLowerCase() + " " : token + " ";
+        } else {
+          output += token;
+        }
+      }
+
+      output = output.replace(/\s+/g, ' ').trim();
+      output = output.charAt(0).toUpperCase() + output.slice(1);
+      return output;
+    }
+
+    function updateTranslation() {
+      try {
+        if (reversed) {
+          outputText.value = fromCode(inputText.value);
+          status.textContent = "Langue codée → Français";
+        } else {
+          outputText.value = toCode(inputText.value);
+          status.textContent = "Français → Langue codée";
+        }
+      } catch (e) {
+        status.textContent = "Erreur de traduction";
+      }
+    }
+
+    document.getElementById("inputText").addEventListener("input", updateTranslation);
+
+    document.getElementById("swapBtn").addEventListener("click", () => {
+      reversed = !reversed;
+      inputText.value = outputText.value;
+      outputText.value = "";
+      labelInput.textContent = reversed ? "Langue codée" : "Français";
+      labelOutput.textContent = reversed ? "Français" : "Langue codée";
+      updateTranslation();
+    });
+
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      document.body.classList.toggle("light");
+      document.getElementById("themeToggle").textContent =
+        document.body.classList.contains("light") ? "Mode sombre" : "Mode clair";
+    });
+
+    function copyToClipboard(id) {
+      const el = document.getElementById(id);
+      el.select();
+      el.setSelectionRange(0, 99999);
+      document.execCommand("copy");
+    }
+
+    const inputText = document.getElementById("inputText");
+    const outputText = document.getElementById("outputText");
+    const status = document.getElementById("status");
+    const labelInput = document.getElementById("labelInput");
+    const labelOutput = document.getElementById("labelOutput");
+  </script>
+</body>
+</html>
+
