@@ -47,7 +47,7 @@
     }
     .actions {
       display: flex;
-      justify-content: flex-end;
+      justify-content: center;
       gap: 0.8rem;
     }
     button {
@@ -62,6 +62,12 @@
       transition: background 0.2s, transform 0.1s;
     }
     button:hover { background: #005fa3; transform: translateY(-1px); }
+    .info {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #bbb;
+      margin-top: 1rem;
+    }
     @media(max-width: 768px) {
       .translator { flex-direction: column; }
       textarea { min-height: 150px; }
@@ -72,20 +78,17 @@
   <div class="wrapper">
     <div class="translator">
       <textarea id="inputText" placeholder="Normal..."></textarea>
-      <textarea id="outputText" placeholder="Secret..." readonly></textarea>
+      <textarea id="outputText" placeholder="Secret..."></textarea>
     </div>
     <div class="actions">
-      <button onclick="swap()">⇄ Inverser</button>
       <button onclick="copyOutput()">📋 Copier</button>
     </div>
+    <div class="info">Tapez du texte dans l'une des cases : la conversion est automatique dans l'autre.</div>
   </div>
 
   <script>
-    // Alphabet inversé mais voyelles restent voyelles, consonnes restent consonnes
     const dict = {
-      // Voyelles
       "a": "e", "e": "i", "i": "o", "o": "u", "u": "a",
-      // Consonnes (rotation simple)
       "b": "c", "c": "d", "d": "f", "f": "g", "g": "h", "h": "j",
       "j": "k", "k": "l", "l": "m", "m": "n", "n": "p", "p": "q",
       "q": "r", "r": "s", "s": "t", "t": "v", "v": "w", "w": "x",
@@ -97,32 +100,27 @@
       Object.entries(dict).map(([k, v]) => [v, k])
     );
 
-    let mode = "fr2code";
-
     function encrypt(text) {
       let step1 = text.toLowerCase().split("").map(ch => dict[ch] || ch).join("");
-      let step2 = step1.split("").reverse().join("");
-      return step2;
+      let words = step1.split(" ").map(w => w.split("").reverse().join(""));
+      return words.join(" ");
     }
 
     function decrypt(text) {
-      let step1 = text.split("").reverse().join("");
+      let words = text.split(" ").map(w => w.split("").reverse().join(""));
+      let step1 = words.join(" ");
       let step2 = step1.split("").map(ch => reverseDict[ch] || ch).join("");
       return step2;
     }
 
-    function update() {
+    function updateFromInput() {
       const input = document.getElementById("inputText").value;
-      let result = mode === "fr2code" ? encrypt(input) : decrypt(input);
-      document.getElementById("outputText").value = result;
+      document.getElementById("outputText").value = encrypt(input);
     }
 
-    function swap() {
-      mode = (mode === "fr2code") ? "code2fr" : "fr2code";
-      const left = document.getElementById("inputText").value;
-      document.getElementById("inputText").value = document.getElementById("outputText").value;
-      document.getElementById("outputText").value = left;
-      update();
+    function updateFromOutput() {
+      const output = document.getElementById("outputText").value;
+      document.getElementById("inputText").value = decrypt(output);
     }
 
     function copyOutput() {
@@ -132,7 +130,8 @@
       alert("Texte copié !");
     }
 
-    document.getElementById("inputText").addEventListener("input", update);
+    document.getElementById("inputText").addEventListener("input", updateFromInput);
+    document.getElementById("outputText").addEventListener("input", updateFromOutput);
   </script>
 </body>
 </html>
